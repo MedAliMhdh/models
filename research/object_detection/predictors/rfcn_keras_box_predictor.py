@@ -14,7 +14,7 @@
 # ==============================================================================
 
 """RFCN Box Predictor."""
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 from object_detection.core import box_predictor
 from object_detection.utils import ops
 
@@ -133,7 +133,7 @@ class RfcnKerasBoxPredictor(box_predictor.KerasBoxPredictor):
   def num_classes(self):
     return self._num_classes
 
-  def _predict(self, image_features, proposal_boxes, **kwargs):
+  def _predict(self, image_features, proposal_boxes):
     """Computes encoded object locations and corresponding confidences.
 
     Args:
@@ -141,7 +141,6 @@ class RfcnKerasBoxPredictor(box_predictor.KerasBoxPredictor):
       width_i, channels_i] containing features for a batch of images.
       proposal_boxes: A float tensor of shape [batch_size, num_proposals,
         box_code_size].
-      **kwargs: Unused Keyword args
 
     Returns:
       box_encodings: A list of float tensors of shape

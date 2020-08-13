@@ -1,4 +1,3 @@
-# Lint as: python2, python3
 # Copyright 2017 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +14,9 @@
 # ==============================================================================
 
 """Convolutional Box Predictors with and without weight sharing."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import collections
 
-from six.moves import range
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 from object_detection.core import box_predictor
 from object_detection.utils import shape_utils
@@ -173,13 +167,12 @@ class ConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
       self._shared_nets.append(net)
     self.built = True
 
-  def _predict(self, image_features, **kwargs):
+  def _predict(self, image_features):
     """Computes encoded object locations and corresponding confidences.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
         width_i, channels_i] containing features for a batch of images.
-      **kwargs: Unused Keyword args
 
     Returns:
       box_encodings: A list of float tensors of shape
@@ -337,17 +330,13 @@ class WeightSharedConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
           tower_name_scope, additional_conv_layer_idx)
       if tower_name_scope not in self._head_scope_conv_layers:
         if self._use_depthwise:
-          kwargs = self._conv_hyperparams.params(use_bias=use_bias)
-          # Both the regularizer and initializer apply to the depthwise layer,
-          # so we remap the kernel_* to depthwise_* here.
-          kwargs['depthwise_regularizer'] = kwargs['kernel_regularizer']
-          kwargs['depthwise_initializer'] = kwargs['kernel_initializer']
           conv_layers.append(
               tf.keras.layers.SeparableConv2D(
-                  self._depth, [self._kernel_size, self._kernel_size],
+                  self._depth,
+                  [self._kernel_size, self._kernel_size],
                   padding='SAME',
                   name=layer_name,
-                  **kwargs))
+                  **self._conv_hyperparams.params(use_bias=use_bias)))
         else:
           conv_layers.append(
               tf.keras.layers.Conv2D(
@@ -406,7 +395,7 @@ class WeightSharedConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
         self._head_scope_conv_layers[tower_name_scope] = conv_layers
       return base_tower_layers
 
-    for feature_index in range(len(input_shapes)):
+    for feature_index, input_shape in enumerate(input_shapes):
       # Additional projection layers should not be shared as input channels
       # (and thus weight shapes) are different
       inserted_layer_counter, projection_layers = (
@@ -432,13 +421,12 @@ class WeightSharedConvolutionalBoxPredictor(box_predictor.KerasBoxPredictor):
 
     self.built = True
 
-  def _predict(self, image_features, **kwargs):
+  def _predict(self, image_features):
     """Computes encoded object locations and corresponding confidences.
 
     Args:
       image_features: A list of float tensors of shape [batch_size, height_i,
         width_i, channels_i] containing features for a batch of images.
-      **kwargs: Unused Keyword args
 
     Returns:
       box_encodings: A list of float tensors of shape

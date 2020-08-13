@@ -15,7 +15,7 @@
 
 """Builder for preprocessing steps."""
 
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 from object_detection.core import preprocessor
 from object_detection.protos import preprocessor_pb2
@@ -95,12 +95,6 @@ PREPROCESSING_FUNCTION_MAP = {
         preprocessor.random_crop_to_aspect_ratio,
     'random_black_patches':
         preprocessor.random_black_patches,
-    'random_jpeg_quality':
-        preprocessor.random_jpeg_quality,
-    'random_downscale_to_target_pixels':
-        preprocessor.random_downscale_to_target_pixels,
-    'random_patch_gaussian':
-        preprocessor.random_patch_gaussian,
     'rgb_to_gray':
         preprocessor.rgb_to_gray,
     'scale_boxes_to_pixel_coordinates': (
@@ -150,7 +144,7 @@ def build(preprocessor_step_config):
     return (preprocessor.random_horizontal_flip,
             {
                 'keypoint_flip_permutation': tuple(
-                    config.keypoint_flip_permutation) or None,
+                    config.keypoint_flip_permutation),
             })
 
   if step_type == 'random_vertical_flip':
@@ -158,7 +152,7 @@ def build(preprocessor_step_config):
     return (preprocessor.random_vertical_flip,
             {
                 'keypoint_flip_permutation': tuple(
-                    config.keypoint_flip_permutation) or None,
+                    config.keypoint_flip_permutation),
             })
 
   if step_type == 'random_rotation90':
@@ -303,26 +297,6 @@ def build(preprocessor_step_config):
               })
     return (preprocessor.ssd_random_crop, {})
 
-  if step_type == 'autoaugment_image':
-    config = preprocessor_step_config.autoaugment_image
-    return (preprocessor.autoaugment_image, {
-        'policy_name': config.policy_name,
-    })
-
-  if step_type == 'drop_label_probabilistically':
-    config = preprocessor_step_config.drop_label_probabilistically
-    return (preprocessor.drop_label_probabilistically, {
-        'dropped_label': config.label,
-        'drop_probability': config.drop_probability,
-    })
-
-  if step_type == 'remap_labels':
-    config = preprocessor_step_config.remap_labels
-    return (preprocessor.remap_labels, {
-        'original_labels': config.original_labels,
-        'new_label': config.new_label
-    })
-
   if step_type == 'ssd_random_crop_pad':
     config = preprocessor_step_config.ssd_random_crop_pad
     if config.operations:
@@ -399,14 +373,5 @@ def build(preprocessor_step_config):
       kwargs['clip_boxes'] = [op.clip_boxes for op in config.operations]
       kwargs['random_coef'] = [op.random_coef for op in config.operations]
     return (preprocessor.ssd_random_crop_pad_fixed_aspect_ratio, kwargs)
-
-  if step_type == 'random_square_crop_by_scale':
-    config = preprocessor_step_config.random_square_crop_by_scale
-    return preprocessor.random_square_crop_by_scale, {
-        'scale_min': config.scale_min,
-        'scale_max': config.scale_max,
-        'max_border': config.max_border,
-        'num_scales': config.num_scales
-    }
 
   raise ValueError('Unknown preprocessing step.')
